@@ -38,34 +38,22 @@ inline void FootPrints::getimpactDataSet(RE::BGSImpactDataSet*& a_impactDataSet,
 	}
 }
 
-inline bool isJumping(RE::Actor* a_actor)
-{
-	bool result = false;
-	return a_actor->GetGraphVariableBool("bInJumpState", result) && result;
-}
+
 
 inline void FootPrints::getBodyNode(std::string& a_node, RE::Actor* a_actor, footPos a_footPos) {
 	switch (a_footPos) {
 	case footPos::left:
-		if (isJumping(a_actor)) {
-			a_node = "NPC L Thigh [LThg]";
-		} else {
-			a_node = "NPC L Calf [LClf]";
-		}
+		a_node = "NPC L Calf [LClf]";
 		break;
 	case footPos::right:
-		if (isJumping(a_actor)) {
-			a_node = "NPC R Thigh [RThg]";
-		} else {
-			a_node = "NPC R Calf [RClf]";
-		}
+		a_node = "NPC R Calf [RClf]";
 		break;
 	}
 }
 
 void FootPrints::playFootPrint(RE::Actor* a_actor, footPos a_foot)
 {
-	RE::NiPoint3 pos = RE::NiPoint3(0.0f, 0.0f, -1.0f);
+	logger::debug("Playing footprint for actor {}", a_actor->GetName());
 	std::string node = "";
 	RE::BGSImpactDataSet* impactData;
 	getimpactDataSet(impactData, a_actor, a_foot);
@@ -76,10 +64,24 @@ void FootPrints::playFootPrint(RE::Actor* a_actor, footPos a_foot)
 	if (node == "") {
 		return;
 	}
+
+	RE::NiPoint3 pos = RE::NiPoint3(0.0f, 0.0f, -1.0f);
 	RE::BGSImpactManager::GetSingleton()->PlayImpactEffect(a_actor, impactData, node, pos, 128.f, false, false);
 }
 
 void FootPrints::printJump(RE::Actor* a_actor) {
-	playFootPrint(a_actor, footPos::left);
-	playFootPrint(a_actor, footPos::right);
+	RE::NiPoint3 pos = RE::NiPoint3(0.0f, 0.0f, -1.0f);
+	std::string nodeL = "NPC L Thigh [LThg]";
+	std::string nodeR = "NPC R Thigh [RThg]";
+	RE::BGSImpactDataSet* impactDataL;
+	RE::BGSImpactDataSet* impactDataR;
+	getimpactDataSet(impactDataL, a_actor, footPos::left);
+	getimpactDataSet(impactDataR, a_actor, footPos::right);
+	if (!impactDataL || !impactDataR) {
+		return;
+	}
+	auto ptr = RE::BGSImpactManager::GetSingleton();
+	
+	ptr->PlayImpactEffect(a_actor, impactDataL, nodeL, pos, 128.f, false, false);
+	ptr->PlayImpactEffect(a_actor, impactDataR, nodeR, pos, 128.f, false, false);
 }
